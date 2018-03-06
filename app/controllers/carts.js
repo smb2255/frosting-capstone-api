@@ -7,9 +7,7 @@ const Cart = models.cart
 const authenticate = require('./concerns/authenticate')
 const setUser = require('./concerns/set-current-user')
 const setModel = require('./concerns/set-mongoose-model')
-const stripe = require('stripe')('sk_test_hNfSbTYlJXKPgq07KvOUGBvC')
 
-let amount
 const index = (req, res, next) => {
   Cart.find({_owner: req.user.id})
     .then(carts => res.json({
@@ -26,7 +24,6 @@ const show = (req, res) => {
 }
 
 const create = (req, res, next) => {
-  amount = req.body.cart.orderTotal
   const cart = Object.assign(req.body.cart, {
     _owner: req.user._id
   })
@@ -34,22 +31,15 @@ const create = (req, res, next) => {
     .then(cart =>
       res.status(201)
         .json({
-          cart: cart.toJSON({ virtuals: true, user: req.user })
+          cart: cart.toJSON({ user: req.user })
         }))
     .catch(next)
 }
 
 const update = (req, res, next) => {
-  amount = req.body.cart.orderTotal
-
   delete req.body.cart._owner
-
   req.cart.update(req.body.cart)
-    .then((cart) => res.sendStatus(204)
-      // .json({
-      //   cart: req.cart.toJSON({ virtuals: true, user: req.user })
-      // })
-    )
+    .then((cart) => res.sendStatus(204))
     .catch(next)
 }
 
@@ -59,36 +49,12 @@ const destroy = (req, res, next) => {
     .catch(next)
 }
 
-const charge = (req, res, next) => {
-  stripe.customers.create({
-    email: req.body.email,
-    source: req.body.id
-  })
-  .then(customer => {
-    return stripe.charges.create({
-      amount,
-      description: 'Store Payment',
-      currency: 'usd',
-      customer: customer.id
-    })
-  })
-  .then(charge => {
-    // console.log('this is a charge: ', charge)
-
-  })
-  .then(() => {
-    res.sendStatus(204)
-  })
-  .catch(next)
-}
-
 module.exports = controller({
   index,
   show,
   create,
   update,
-  destroy,
-  charge
+  destroy
 }, { before: [
   { method: setUser, only: ['index', 'show'] },
   { method: authenticate, only: ['index', 'show', 'create', 'update', 'destroy'] },
