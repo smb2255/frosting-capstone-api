@@ -8,6 +8,6 @@ ID="5a837a48e9f3b92d95ce27d5"
 curl "${API}${URL_PATH}/${ID}" \
   --include \
   --request GET \
-  --header "Authorization: Token token=$TOKEN" \
+ --header "Authorization: Token token=$TOKEN" \
 
 echo
